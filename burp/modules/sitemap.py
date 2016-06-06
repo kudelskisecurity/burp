@@ -22,7 +22,7 @@ class SiteMap(Base):
         with JsonParser(json):
             return (RequestReturned.from_json(j.pop('request')) for j in json.pop('data'))
 
-    def post(self, request: Request, response: Response) -> Tuple[RequestReturned, ResponseReturned]:
+    def post(self, request: Request, response: Response) -> Tuple[RequestReturned2, ResponseReturned]:
         ret = self._post((201,), json=dict(
             request=request.to_json(),
             response=response.to_json(),

@@ -43,6 +43,6 @@ class Burp:
                     self.disable = ProxyInterceptDisable(connector)
 
             def __init__(self) -> None:
-                self.intercept = self.Intercept()
+                self.intercept = Proxy.Intercept()
 
         self.proxy = Proxy()

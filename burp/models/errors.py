@@ -1,7 +1,5 @@
 import requests
 
-from burp.models.scan.active import Scan
-
 
 class BurpError(Exception):
     pass
@@ -13,7 +11,6 @@ class WeirdBurpResponseError(BurpError):
         self.response = response
 
 
-class ScanNotFoundError(BurpError):
-    def __init__(self, scan: Scan) -> None:
-        super().__init__(scan)
-        self.scan = scan
+class InvalidHttpVersion(Exception):
+    def __init__(self, http_version: str) -> None:
+        super().__init__('unable to parse received httpVersion', http_version)

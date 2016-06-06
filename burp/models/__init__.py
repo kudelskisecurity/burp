@@ -77,6 +77,3 @@ class RequestResponse(NamedTuple('RequestResponse', [('request', Request),
     pass
 
 
-class InvalidHttpVersion(Exception):
-    def __init__(self, http_version: str) -> None:
-        super().__init__('unable to parse received httpVersion', http_version)

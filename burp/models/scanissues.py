@@ -1,21 +1,15 @@
 from base64 import b64decode
 from itertools import chain
 
-from typing import MutableMapping, Any, Mapping, Union, NamedTuple, Tuple, Iterator
+from typing import MutableMapping, Any, Mapping, NamedTuple, Tuple, Iterator, Dict, Union
 
-from burp.models import InvalidHttpVersion, IssueType
+from burp.models import IssueType
 from burp.models.enums import IssueSeverity, IssueConfidence
+from burp.models.errors import InvalidHttpVersion
 from burp.utils.json import ensure, JsonParser, pop_all, translate_keys, ensure_values
 
-_COMMON_REQUEST_RESPONSE_FIELDS = [
-    ('host', str),
-    ('port', int),
-    ('protocol', str),
-    ('raw', bytes),
-]
 
-
-def _common_request_response_from_json(json: MutableMapping[str, Any]) -> Mapping[str, Union[str, int, bytes]]:
+def _common_request_response_from_json(json: MutableMapping[str, Any]) -> Dict[str, Any]:
     return dict(
         host=json.pop('host'),
         port=ensure(int, json.pop('port')),
@@ -24,17 +18,25 @@ def _common_request_response_from_json(json: MutableMapping[str, Any]) -> Mappin
     )
 
 
-class Request(NamedTuple('Request', _COMMON_REQUEST_RESPONSE_FIELDS)):
+class Request(NamedTuple('Request', [
+    ('host', str),
+    ('port', int),
+    ('protocol', str),
+    ('raw', bytes),
+])):
     pass
 
 
-class RequestReturned(NamedTuple('RequestReturned',
-                                 list(Request._field_types.items()) +
-                                 [('http_version', Tuple[int, int]),
-                                  ('in_scope', bool),
-                                  ('reference_id', int),
-                                  ('tool_flag', int),
-                                  ])):
+class RequestReturned(NamedTuple('RequestReturned', [
+    ('host', str),
+    ('port', int),
+    ('protocol', str),
+    ('raw', bytes),
+    ('http_version', Tuple[int, int]),
+    ('in_scope', bool),
+    ('reference_id', int),
+    ('tool_flag', int),
+])):
     @staticmethod
     def __parse_http_version(value: str) -> Tuple[int, int]:
         # TODO duplicate from sitemap
@@ -59,17 +61,25 @@ class RequestReturned(NamedTuple('RequestReturned',
             )
 
 
-class Response(NamedTuple('Response', _COMMON_REQUEST_RESPONSE_FIELDS)):
+class Response(NamedTuple('Response', [
+    ('host', str),
+    ('port', int),
+    ('protocol', str),
+    ('raw', bytes),
+])):
     pass
 
 
-class ResponseReturned(NamedTuple('ResponseReturned',
-                                  list(Response._field_types.items()) +
-                                  [('status_code', int),
-                                   ('in_scope', bool),
-                                   ('reference_id', int),
-                                   ('tool_flag', int),
-                                   ])):
+class ResponseReturned(NamedTuple('ResponseReturned', [
+    ('host', str),
+    ('port', int),
+    ('protocol', str),
+    ('raw', bytes),
+    ('status_code', int),
+    ('in_scope', bool),
+    ('reference_id', int),
+    ('tool_flag', int),
+])):
     @classmethod
     def from_json(cls, json: MutableMapping[str, Any]) -> 'ResponseReturned':
         with JsonParser(json):
@@ -86,7 +96,7 @@ class ResponseReturned(NamedTuple('ResponseReturned',
             )
 
 
-_COMMON_SCAN_ISSUE_FIELDS = [
+class ScanIssue(NamedTuple('ScanIssue', [
     ('url', str),
     ('host', str),
     ('port', int),
@@ -94,19 +104,16 @@ _COMMON_SCAN_ISSUE_FIELDS = [
     ('name', str),
     ('issue_type', IssueType),
     ('severity', IssueSeverity),
-    ('confidence', str),  # TODO maybe enum
+    ('confidence', IssueConfidence),
     ('issue_background', str),
     ('remediation_background', str),
     ('issue_detail', str),
     ('remediation_detail', str),
-]
-
-
-class ScanIssue(NamedTuple('ScanIssue',
-                           _COMMON_SCAN_ISSUE_FIELDS + [
-                               ('requests_responses', Tuple[Tuple[Request, Response], ...]),
-                           ])):
-    def __new__(cls, host: str, port: int, protocol: str, **kwargs) -> 'ScanIssue':
+    ('requests_responses', Tuple[Tuple[Request, Response], ...]),
+])):
+    def __new__(cls, host: str, port: int, protocol: str,
+                **kwargs: Union[str, IssueType, IssueSeverity, Tuple[Tuple[Request, Response], ...]]) \
+            -> 'ScanIssue':
         url = '{}://{}:{}/'.format(protocol, host, port)
         return super().__new__(cls, url=url, host=host, port=port, protocol=protocol, **kwargs)
 
@@ -128,11 +135,22 @@ class ScanIssue(NamedTuple('ScanIssue',
         )
 
 
-class ScanIssueReturned(NamedTuple('ScanIssueReturned',
-                                   _COMMON_SCAN_ISSUE_FIELDS + [
-                                       ('in_scope', bool),
-                                       ('requests_responses', Tuple[Tuple[RequestReturned, ResponseReturned], ...])
-                                   ])):
+class ScanIssueReturned(NamedTuple('ScanIssueReturned', [
+    ('url', str),
+    ('host', str),
+    ('port', int),
+    ('protocol', str),  # TODO maybe enum
+    ('name', str),
+    ('issue_type', IssueType),
+    ('severity', IssueSeverity),
+    ('confidence', IssueConfidence),
+    ('issue_background', str),
+    ('remediation_background', str),
+    ('issue_detail', str),
+    ('remediation_detail', str),
+    ('in_scope', bool),
+    ('requests_responses', Tuple[Tuple[RequestReturned, ResponseReturned], ...]),
+])):
     @staticmethod
     def _get_requests_responses(json: MutableMapping[str, Any]) \
             -> Iterator[Tuple[RequestReturned, ResponseReturned]]:

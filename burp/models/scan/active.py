@@ -3,7 +3,14 @@ from base64 import b64encode
 from typing import NamedTuple, Mapping, Any, Tuple, MutableMapping
 
 from burp.models import ScanStatus
+from burp.models.errors import BurpError
 from burp.utils.json import JsonParser, pop_all, translate_keys, ensure_values
+
+
+class ScanNotFoundError(BurpError):
+    def __init__(self, scan: 'Scan') -> None:
+        super().__init__(scan)
+        self.scan = scan
 
 
 class Request(NamedTuple('Request', [('host', str),

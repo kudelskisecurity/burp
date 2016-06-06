@@ -1,9 +1,8 @@
 from typing import Iterable, Optional
 
-from burp import Connector
-from burp.models.scan.active import Request, Scan
+from burp.modules import Connector
+from burp.models.scan.active import Request, Scan, ScanNotFoundError
 from burp.modules import WeirdBurpResponseError
-from burp.modules.errors import ScanNotFoundError
 from burp.modules.scan import Scan as ScanModule
 from burp.utils.json import JsonParser
 
@@ -17,7 +16,10 @@ class ScanActive(ScanModule):
 
     def get(self, scan: Optional[Scan] = None) -> Iterable[Scan]:
         try:
-            response = self._get((200,), scan and str(scan.id))
+            path = None
+            if scan is not None:
+                path = str(scan.id)
+            response = self._get((200,), path)
         except WeirdBurpResponseError as e:
             if e.response.status_code != 404:
                 raise

@@ -5,6 +5,8 @@ from types import TracebackType
 from typing import List, TypeVar, Dict
 from typing import Optional, MutableMapping, Any, Generator, Tuple, Mapping
 
+from burp.models.errors import InvalidHttpVersion
+
 _T = TypeVar('_T')
 
 
@@ -69,3 +71,14 @@ def translate_keys(json: MutableMapping[str, str], translation: MutableMapping[s
             del json[k]
             json[translation[k]] = v
     return json
+
+
+def parse_http_version(value: str) -> Tuple[int, int]:
+    try:
+        protocol, version = value.split('/')
+        if protocol != 'HTTP':
+            raise ValueError()
+        major, minor = version.split('.')
+        return int(major), int(minor)
+    except ValueError:
+        raise InvalidHttpVersion(value)

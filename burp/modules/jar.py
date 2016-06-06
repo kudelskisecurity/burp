@@ -16,7 +16,7 @@ class Jar(Base):
         with JsonParser(json):
             return (Cookie.from_json(j) for j in json.pop('data'))
 
-    def post(self, cookie: Cookie) -> None:
+    def post(self, cookie: Cookie) -> Cookie:
         ret = self._post((201,), json=cookie.to_json())
         json = ret.json()
 

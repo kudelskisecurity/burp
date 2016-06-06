@@ -1,7 +1,7 @@
 import requests
 from typing import Mapping, Any, Optional, Tuple
 
-from burp.modules.errors import WeirdBurpResponseError
+from burp.models.errors import WeirdBurpResponseError
 
 
 class Connector:

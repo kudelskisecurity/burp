@@ -1,16 +1,14 @@
 from html.parser import HTMLParser
 
 import requests
-from typing import Generator, Optional
-from typing import List
-from typing import Tuple
+from typing import Generator, Optional, List, Tuple, Set
 
 from burp.models.enums import IssueSeverity
 
 
 class _IssueTypeParser(HTMLParser):
     def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
+        super().__init__(convert_charrefs=True)  # type: ignore  # TODO remove when better conditionals
         self.got_main_content = False
         self.got_row = False
         self.td_count = 0

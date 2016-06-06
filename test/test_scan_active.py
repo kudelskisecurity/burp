@@ -1,6 +1,5 @@
 from burp.models.enums import ScanStatus
-from burp.models.scan.active import Request, Scan
-from burp.modules.errors import ScanNotFoundError
+from burp.models.scan.active import Request, Scan, ScanNotFoundError
 from test import TestBase
 
 

@@ -1,4 +1,4 @@
-from burp import Connector
+from burp.modules import Connector
 from burp.models.scan.passive import RequestResponse
 from burp.modules.scan import Scan as ScanModule
 
