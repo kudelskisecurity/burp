@@ -1,14 +1,17 @@
 from base64 import b64decode, b64encode
 from itertools import chain
 
-from typing import MutableMapping, Any, Mapping, NamedTuple, Tuple, Iterator, Dict, Union
+from typing import MutableMapping, Any, Mapping, NamedTuple, Tuple, Iterator
+from typing import Union, Dict
 
-from burp.models import IssueType, RequestSmall
-from burp.models.enums import IssueSeverity, IssueConfidence
-from burp.utils.json import ensure, JsonParser, pop_all, translate_keys, ensure_values, parse_http_version
+from burp.models import RequestSmall
+from burp.models.enums import IssueSeverity, IssueConfidence, IssueType
+from burp.utils.json import ensure, JsonParser, pop_all, translate_keys
+from burp.utils.json import ensure_values, parse_http_version
 
 
-def _common_request_response_from_json(json: MutableMapping[str, Any]) -> Dict[str, Any]:
+def _common_request_response_from_json(json: MutableMapping[str, Any]) \
+        -> Dict[str, Any]:
     return dict(
         host=json.pop('host'),
         port=ensure(int, json.pop('port')),
@@ -97,10 +100,18 @@ class ScanIssue(NamedTuple('ScanIssue', [
     ('requests_responses', Tuple[Tuple[RequestSmall, Response], ...]),
 ])):
     def __new__(cls, host: str, port: int, protocol: str,
-                **kwargs: Union[str, IssueType, IssueSeverity, Tuple[Tuple[RequestSmall, Response], ...]]) \
+                **kwargs: Union[str,
+                                IssueType,
+                                IssueSeverity,
+                                Tuple[Tuple[RequestSmall, Response], ...]]) \
             -> 'ScanIssue':
         url = '{}://{}:{}/'.format(protocol, host, port)
-        return super().__new__(cls, url=url, host=host, port=port, protocol=protocol, **kwargs)
+        return super().__new__(cls,
+                               url=url,
+                               host=host,
+                               port=port,
+                               protocol=protocol,
+                               **kwargs)
 
     def to_json(self) -> Mapping[str, Any]:
         return dict(
@@ -118,7 +129,8 @@ class ScanIssue(NamedTuple('ScanIssue', [
             remediationDetail=self.remediation_detail,
             requestResponses=[dict(
                 request=req.to_json(),
-                response=res.to_json()) for req, res in self.requests_responses],
+                response=res.to_json()
+            ) for req, res in self.requests_responses],
         )
 
 
@@ -136,14 +148,18 @@ class ScanIssueReturned(NamedTuple('ScanIssueReturned', [
     ('issue_detail', str),
     ('remediation_detail', str),
     ('in_scope', bool),
-    ('requests_responses', Tuple[Tuple[RequestReturned, ResponseReturned], ...]),
+    ('requests_responses', Tuple[Tuple[RequestReturned,
+                                       ResponseReturned], ...]),
 ])):
     @staticmethod
     def _get_requests_responses(json: MutableMapping[str, Any]) \
             -> Iterator[Tuple[RequestReturned, ResponseReturned]]:
         for item in json.pop('requestResponses'):
             request, response = item.pop('request'), item.pop('response')
-            yield RequestReturned.from_json(request), ResponseReturned.from_json(response)
+            yield (
+                RequestReturned.from_json(request),
+                ResponseReturned.from_json(response),
+            )
 
     @classmethod
     def from_json(cls, json: MutableMapping[str, Any]) -> 'ScanIssueReturned':

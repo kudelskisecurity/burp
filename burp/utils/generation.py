@@ -1,14 +1,16 @@
 from html.parser import HTMLParser
 
 import requests
-from typing import Generator, Optional, List, Tuple, Set
+from typing import Generator, Optional, List, Tuple
+from typing import Set  # flake8: noqa
 
 from burp.models.enums import IssueSeverity
 
 
 class _IssueTypeParser(HTMLParser):
     def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)  # type: ignore  # TODO remove when better conditionals
+        # TODO remove when better conditionals
+        super().__init__(convert_charrefs=True)  # type: ignore
         self.got_main_content = False
         self.got_row = False
         self.td_count = 0

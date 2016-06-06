@@ -3,15 +3,18 @@ from itertools import chain
 
 from typing import NamedTuple, Mapping, Any, MutableMapping, Tuple, Dict
 
-from burp.utils.json import ensure, JsonParser, pop_all, ensure_values, parse_http_version
+from burp.utils.json import ensure, JsonParser, pop_all, ensure_values
+from burp.utils.json import parse_http_version
 
 
-class Request(NamedTuple('Request', [('host', str),
-                                     ('port', int),
-                                     ('protocol', str),
-                                     ('raw', bytes),
-                                     ('comment', str),
-                                     ('highlight', str)])):  # TODO potential enum
+class Request(NamedTuple('Request', [
+    ('host', str),
+    ('port', int),
+    ('protocol', str),
+    ('raw', bytes),
+    ('comment', str),
+    ('highlight', str),
+])):  # TODO potential enum
 
     def to_json(self) -> Mapping[str, Any]:
         return dict(
@@ -41,20 +44,21 @@ def _common_returned(json: MutableMapping[str, Any]) -> Dict[str, Any]:
     )
 
 
-class RequestReturned(NamedTuple('RequestReturned',
-                                 [('url', str),
-                                  ('host', str),
-                                  ('port', int),
-                                  ('protocol', str),
-                                  ('raw', bytes),
-                                  ('http_version', Tuple[int, int]),
-                                  ('method', str),
-                                  ('body', bytes),
-                                  ('path', str),
-                                  ('headers', Tuple[Tuple[str, str], ...]),
-                                  ('in_scope', bool),
-                                  ('tool_flag', int),  # TODO potential flag
-                                  ('reference_id', int)])):
+class RequestReturned(NamedTuple('RequestReturned', [
+    ('url', str),
+    ('host', str),
+    ('port', int),
+    ('protocol', str),
+    ('raw', bytes),
+    ('http_version', Tuple[int, int]),
+    ('method', str),
+    ('body', bytes),
+    ('path', str),
+    ('headers', Tuple[Tuple[str, str], ...]),
+    ('in_scope', bool),
+    ('tool_flag', int),  # TODO potential flag
+    ('reference_id', int),
+])):
     @classmethod
     def from_json(cls, json: MutableMapping[str, Any]) -> 'RequestReturned':
         with JsonParser(json):
@@ -63,7 +67,10 @@ class RequestReturned(NamedTuple('RequestReturned',
             json.pop('comment', None)  # TODO sometimes it's there
             return RequestReturned(
                 http_version=parse_http_version(json.pop('httpVersion')),
-                headers=tuple((ensure(str, k), ensure(str, v)) for k, v in pop_all(json.pop('headers')).items()),
+                headers=tuple(
+                    (ensure(str, k), ensure(str, v))
+                    for k, v in pop_all(json.pop('headers')).items()
+                ),
                 body=b64decode(json.pop('body').encode()),
                 **dict(chain(
                     _common_returned(json).items(),
@@ -72,24 +79,24 @@ class RequestReturned(NamedTuple('RequestReturned',
             )
 
 
-class RequestReturned2(NamedTuple('RequestReturned',
-                                  [('host', str),
-                                   ('port', int),
-                                   ('protocol', str),
-                                   ('raw', bytes),
-                                   ('http_version', Tuple[int, int]),
-                                   ('highlight', str),
-                                   ('comment', str),
-                                   ('in_scope', bool),
-                                   ('tool_flag', int),  # TODO potential flag
-                                   ('reference_id', int)])):
+class RequestReturned2(NamedTuple('RequestReturned', [
+    ('host', str),
+    ('port', int),
+    ('protocol', str),
+    ('raw', bytes),
+    ('http_version', Tuple[int, int]),
+    ('highlight', str),
+    ('comment', str),
+    ('in_scope', bool),
+    ('tool_flag', int),  # TODO potential flag
+    ('reference_id', int),
+])):
     @classmethod
     def from_json(cls, json: MutableMapping[str, Any]) -> 'RequestReturned2':
         with JsonParser(json):
+            # TODO body, headers?
             return RequestReturned2(
                 http_version=parse_http_version(json.pop('httpVersion')),
-                # headers=tuple((ensure(str, k), ensure(str, v)) for k, v in pop_all(json.pop('headers')).items()),
-                # body=b64decode(json.pop('body').encode()),
                 **dict(chain(
                     _common_returned(json).items(),
                     pop_all(ensure_values(str, json)).items(),
@@ -97,13 +104,14 @@ class RequestReturned2(NamedTuple('RequestReturned',
             )
 
 
-class ResponseReturned(NamedTuple('ResponseReturned',
-                                  [('status_code', int),  # TODO potential enum
-                                   ('port', int),
-                                   ('raw', bytes),
-                                   ('in_scope', bool),
-                                   ('tool_flag', int),  # TODO potential flag
-                                   ('reference_id', int)])):
+class ResponseReturned(NamedTuple('ResponseReturned', [
+    ('status_code', int),  # TODO potential enum
+    ('port', int),
+    ('raw', bytes),
+    ('in_scope', bool),
+    ('tool_flag', int),  # TODO potential flag
+    ('reference_id', int),
+])):
     @classmethod
     def from_json(cls, json: MutableMapping[str, Any]) -> 'ResponseReturned':
         with JsonParser(json):

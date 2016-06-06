@@ -8,10 +8,12 @@ from typing import Optional, MutableMapping, Any, Generator, Tuple, Mapping
 from burp.models.errors import InvalidHttpVersion
 
 _T = TypeVar('_T')
+_QueueType = List[Tuple[Tuple[str, ...], MutableMapping[str, Any]]]  # flake8: noqa
 
 
 class ElementStillInJSONError(Exception):
-    def __init__(self, path: Tuple[str, ...], elem: Mapping[str, Any]) -> None:
+    def __init__(self, path: Tuple[str, ...],
+                 elem: Mapping[str, Any]) -> None:
         super().__init__(path, elem)
 
 
@@ -21,8 +23,11 @@ class JsonParser:
 
     @staticmethod
     def __get_maps(json: MutableMapping[str, Any]) \
-            -> Generator[Tuple[Tuple[str, ...], MutableMapping[str, Any]], None, None]:
-        queue = [(tuple(), json)]  # type: List[Tuple[Tuple[str, ...], MutableMapping[str, Any]]]
+            -> Generator[Tuple[Tuple[str, ...], MutableMapping[str, Any]],
+                         None,
+                         None]:
+
+        queue = [(tuple(), json)]  # type: _QueueType
         while queue:
             path, elem = queue.pop()
             yield path, elem
@@ -34,7 +39,9 @@ class JsonParser:
     def __enter__(self) -> 'JsonParser':
         return self
 
-    def __exit__(self, exc_type: Optional[type] = None, exc_val: Optional[Exception] = None,
+    def __exit__(self,
+                 exc_type: Optional[type] = None,
+                 exc_val: Optional[Exception] = None,
                  exc_tb: Optional[TracebackType] = None) -> bool:
         for path, elem in self.__maps:
             if len(elem) is not 0:
@@ -50,10 +57,13 @@ def ensure(needed_type: type, value: _T) -> _T:
 
 
 # TODO would be nice to provide an overloaded version
-def ensure_values(needed_type: type, json: MutableMapping[str, Any]) -> MutableMapping[str, str]:
+def ensure_values(needed_type: type,
+                  json: MutableMapping[str, Any]
+                  ) -> MutableMapping[str, str]:
     for k, v in json.items():
         if not isinstance(v, needed_type):
-            raise TypeError('do not contain only type {}'.format(needed_type), json, k, v)
+            msg = 'do not contain only type {}'.format(needed_type)
+            raise TypeError(msg, json, k, v)
     return json
 
 
@@ -64,7 +74,9 @@ def pop_all(json: MutableMapping[str, Any]) -> Dict[str, Any]:
         json.clear()
 
 
-def translate_keys(json: MutableMapping[str, str], translation: MutableMapping[str, str]) -> MutableMapping[str, str]:
+def translate_keys(json: MutableMapping[str, str],
+                   translation: MutableMapping[str, str],
+                   ) -> MutableMapping[str, str]:
     for k in copy(json):
         v = json[k]
         if k in translation:

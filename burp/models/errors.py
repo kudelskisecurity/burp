@@ -7,7 +7,10 @@ class BurpError(Exception):
 
 class WeirdBurpResponseError(BurpError):
     def __init__(self, response: requests.Response) -> None:
-        super().__init__(response, response.request.method, response.request.url, response.text)
+        super().__init__(response,
+                         response.request.method,
+                         response.request.url,
+                         response.text)
         self.response = response
 
 

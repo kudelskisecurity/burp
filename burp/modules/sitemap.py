@@ -1,8 +1,9 @@
 from base64 import b64encode
 
-from typing import Optional, Any, Iterable, Tuple
+from typing import Optional, Iterable, Tuple
 
-from burp.models.sitemap import Request, Response, RequestReturned, ResponseReturned, RequestReturned2
+from burp.models.sitemap import Request, Response, RequestReturned
+from burp.models.sitemap import ResponseReturned, RequestReturned2
 from burp.modules import Base, Connector
 from burp.utils.json import JsonParser
 
@@ -20,9 +21,12 @@ class SiteMap(Base):
 
         json = response.json()
         with JsonParser(json):
-            return (RequestReturned.from_json(j.pop('request')) for j in json.pop('data'))
+            return (RequestReturned.from_json(j.pop('request'))
+                    for j in json.pop('data'))
 
-    def post(self, request: Request, response: Response) -> Tuple[RequestReturned2, ResponseReturned]:
+    def post(self,
+             request: Request,
+             response: Response) -> Tuple[RequestReturned2, ResponseReturned]:
         ret = self._post((201,), json=dict(
             request=request.to_json(),
             response=response.to_json(),
@@ -30,5 +34,5 @@ class SiteMap(Base):
 
         json = ret.json()
         with JsonParser(json):
-            return RequestReturned2.from_json(json.pop('request')), \
-                   ResponseReturned.from_json(json.pop('response'))
+            return (RequestReturned2.from_json(json.pop('request')),
+                    ResponseReturned.from_json(json.pop('response')))
