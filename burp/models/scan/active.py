@@ -7,12 +7,6 @@ from burp.models.errors import BurpError
 from burp.utils.json import JsonParser, pop_all, translate_keys, ensure_values
 
 
-class ScanNotFoundError(BurpError):
-    def __init__(self, scan: 'Scan') -> None:
-        super().__init__(scan)
-        self.scan = scan
-
-
 class Request(NamedTuple('Request', [('host', str),
                                      ('port', int),
                                      ('use_https', bool),
@@ -46,3 +40,9 @@ class Scan(NamedTuple('Scan', [('id', int),
                     'percentComplete': 'percent_complete',
                 }))
             )
+
+
+class ScanNotFoundError(BurpError):
+    def __init__(self, scan: Scan) -> None:
+        super().__init__(scan)
+        self.scan = scan

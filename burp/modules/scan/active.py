@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 
 from burp.modules import Connector
-from burp.models.scan.active import Request, Scan, ScanNotFoundError
+from burp.models.scan.active import Request, ScanNotFoundError, Scan
 from burp.modules import WeirdBurpResponseError
 from burp.modules.scan import Scan as ScanModule
 from burp.utils.json import JsonParser

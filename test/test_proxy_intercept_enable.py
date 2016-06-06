@@ -1,4 +1,3 @@
-from burp.models.send import Request
 from test import TestBase
 
 

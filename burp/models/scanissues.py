@@ -1,12 +1,11 @@
-from base64 import b64decode
+from base64 import b64decode, b64encode
 from itertools import chain
 
 from typing import MutableMapping, Any, Mapping, NamedTuple, Tuple, Iterator, Dict, Union
 
-from burp.models import IssueType
+from burp.models import IssueType, RequestSmall
 from burp.models.enums import IssueSeverity, IssueConfidence
-from burp.models.errors import InvalidHttpVersion
-from burp.utils.json import ensure, JsonParser, pop_all, translate_keys, ensure_values
+from burp.utils.json import ensure, JsonParser, pop_all, translate_keys, ensure_values, parse_http_version
 
 
 def _common_request_response_from_json(json: MutableMapping[str, Any]) -> Dict[str, Any]:
@@ -14,49 +13,28 @@ def _common_request_response_from_json(json: MutableMapping[str, Any]) -> Dict[s
         host=json.pop('host'),
         port=ensure(int, json.pop('port')),
         protocol=json.pop('protocol'),
-        raw=b64decode(json.pop('raw').encode()),
     )
-
-
-class Request(NamedTuple('Request', [
-    ('host', str),
-    ('port', int),
-    ('protocol', str),
-    ('raw', bytes),
-])):
-    pass
 
 
 class RequestReturned(NamedTuple('RequestReturned', [
     ('host', str),
     ('port', int),
     ('protocol', str),
-    ('raw', bytes),
     ('http_version', Tuple[int, int]),
     ('in_scope', bool),
     ('reference_id', int),
     ('tool_flag', int),
+    ('raw', bytes),
 ])):
-    @staticmethod
-    def __parse_http_version(value: str) -> Tuple[int, int]:
-        # TODO duplicate from sitemap
-        try:
-            protocol, version = value.split('/')
-            if protocol != 'HTTP':
-                raise ValueError()
-            major, minor = version.split('.')
-            return int(major), int(minor)
-        except ValueError:
-            raise InvalidHttpVersion(value)
-
     @classmethod
     def from_json(cls, json: MutableMapping[str, Any]) -> 'RequestReturned':
         with JsonParser(json):
             return RequestReturned(
-                http_version=cls.__parse_http_version(json.pop('httpVersion')),
+                http_version=parse_http_version(json.pop('httpVersion')),
                 in_scope=ensure(bool, json.pop('inScope')),
                 reference_id=ensure(int, json.pop('referenceID')),
                 tool_flag=ensure(int, json.pop('toolFlag')),
+                raw=b64decode(json.pop('raw')),
                 **_common_request_response_from_json(json)
             )
 
@@ -67,7 +45,13 @@ class Response(NamedTuple('Response', [
     ('protocol', str),
     ('raw', bytes),
 ])):
-    pass
+    def to_json(self) -> Mapping[str, Union[int, str]]:
+        return dict(
+            host=self.host,
+            port=self.port,
+            protocol=self.protocol,
+            raw=b64encode(self.raw).decode(),
+        )
 
 
 class ResponseReturned(NamedTuple('ResponseReturned', [
@@ -85,6 +69,7 @@ class ResponseReturned(NamedTuple('ResponseReturned', [
         with JsonParser(json):
             return ResponseReturned(
                 in_scope=ensure(bool, json.pop('inScope')),
+                raw=b64decode(json.pop('raw').encode()),
                 **dict(chain(
                     _common_request_response_from_json(json).items(),
                     pop_all(translate_keys(ensure_values(int, json), {
@@ -109,10 +94,10 @@ class ScanIssue(NamedTuple('ScanIssue', [
     ('remediation_background', str),
     ('issue_detail', str),
     ('remediation_detail', str),
-    ('requests_responses', Tuple[Tuple[Request, Response], ...]),
+    ('requests_responses', Tuple[Tuple[RequestSmall, Response], ...]),
 ])):
     def __new__(cls, host: str, port: int, protocol: str,
-                **kwargs: Union[str, IssueType, IssueSeverity, Tuple[Tuple[Request, Response], ...]]) \
+                **kwargs: Union[str, IssueType, IssueSeverity, Tuple[Tuple[RequestSmall, Response], ...]]) \
             -> 'ScanIssue':
         url = '{}://{}:{}/'.format(protocol, host, port)
         return super().__new__(cls, url=url, host=host, port=port, protocol=protocol, **kwargs)
@@ -131,7 +116,9 @@ class ScanIssue(NamedTuple('ScanIssue', [
             remediationBackground=self.remediation_background,
             issueDetail=self.issue_detail,
             remediationDetail=self.remediation_detail,
-            requestResponses=[(req.to_json(), res.to_json()) for req, res in self.requests_responses],
+            requestResponses=[dict(
+                request=req.to_json(),
+                response=res.to_json()) for req, res in self.requests_responses],
         )
 
 

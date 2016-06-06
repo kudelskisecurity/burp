@@ -1,16 +1,16 @@
-import unittest
 from datetime import datetime
 
-from burp.models import Cookie, to_raw
-from burp.models.scanissues import ScanIssueReturned
+from burp.models import Cookie
 from burp.models.scan.active import Scan
+from burp.models.scanissues import ScanIssueReturned
+from test import TestBase
 
 
-class TestSerialize(unittest.TestCase):
+class TestSerialize(TestBase):
     def test_serialize_scanissuereturned(self):
         json = {
-            'url': 'http://liftsecurity.io',
-            'host': 'liftsecurity.io',
+            'url': self.url,
+            'host': self.target,
             'port': 4444,
             'protocol': 'http',
             'name': 'Hello World',
@@ -24,7 +24,7 @@ class TestSerialize(unittest.TestCase):
             'requestResponses': [
                 {
                     'request': {
-                        'host': 'liftsecurity.io',
+                        'host': self.target,
                         'port': 4444,
                         'protocol': 'http',
                         'httpVersion': 'HTTP/1.1',
@@ -36,7 +36,7 @@ class TestSerialize(unittest.TestCase):
                     'response': {
                         'statusCode': 0,
                         'raw': 'SFRUUCAyMDAgT0s\u003d',
-                        'host': 'liftsecurity.io',
+                        'host': self.target,
                         'protocol': 'http',
                         'port': 4444,
                         'inScope': False,
@@ -52,7 +52,7 @@ class TestSerialize(unittest.TestCase):
 
     def test_serialize_cookie(self):
         json_ref = {
-            'domain': 'liftsecurity.io',
+            'domain': self.target,
             'name': 'SID',
             'value': '192891pj2ijf90u129',
             'expiration': 'Oct 15, 2014 9:09:44 AM'
@@ -75,21 +75,3 @@ class TestSerialize(unittest.TestCase):
         }
 
         Scan.from_json(json)
-
-    def test_serialize_request(self):
-        raw_request = to_raw(
-            host='perdu.com',
-            path='/',
-            headers=(('Accept', '*/*'),),
-            body='<html />',
-            method='GET',
-            http_version=(1, 1),
-        )
-
-        ref_request = b'GET / HTTP/1.1\n' \
-                      b'Host: perdu.com\n' \
-                      b'Accept: */*\n' \
-                      b'\n' \
-                      b'<html />\n'
-
-        self.assertEqual(raw_request, ref_request)

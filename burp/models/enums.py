@@ -149,3 +149,8 @@ class ScanStatus(Enum):
     FINISHED = 'finished'
     CANCELLED = 'cancelled'
     NOTHING_DONE = '0% complete'
+
+
+class Tool(Enum):
+    REPEATER = 'repeater'
+    INTRUDER = 'intruder'

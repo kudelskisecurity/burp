@@ -1,6 +1,7 @@
 import unittest
 
-from burp.utils.json import JsonParser, ElementStillInJSONError
+from burp.models.errors import InvalidHttpVersion
+from burp.utils.json import JsonParser, ElementStillInJSONError, parse_http_version
 
 
 class TestUtils(unittest.TestCase):
@@ -31,3 +32,21 @@ class TestUtils(unittest.TestCase):
         b = a.pop('b')
         b.pop('d')
         self.assertRaises(ElementStillInJSONError, jp.__exit__)
+
+    def test_utils_parse_http_version(self):
+        self.assertEqual(parse_http_version('HTTP/1.1'), (1, 1))
+
+    def __assert_invalid_http_version(self, value):
+        self.assertRaises(InvalidHttpVersion, parse_http_version, value)
+
+    def test_utils_parse_http_version_missing_slash(self):
+        self.__assert_invalid_http_version('HTTP1.1')
+
+    def test_utils_parse_http_version_missing_dot(self):
+        self.__assert_invalid_http_version('HTTP/11')
+
+    def test_utils_parse_http_version_unknow_proto(self):
+        self.__assert_invalid_http_version('HTTPS/1.1')
+
+    def test_utils_parse_http_version_missing_proto(self):
+        self.__assert_invalid_http_version('/1.1')

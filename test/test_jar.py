@@ -19,7 +19,7 @@ class TestSpider(TestBase):
 
     def test_spider_add(self):
         cookie = Cookie(
-            domain='perdu.com',
+            domain=self.target,
             expiration=datetime.now().replace(microsecond=0) + timedelta(1),
             name='test cookie',
             value='nothing really',

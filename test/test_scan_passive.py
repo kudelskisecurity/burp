@@ -4,11 +4,11 @@ from test import TestBase
 
 class TestScanPassive(TestBase):
     def test_scan_passive_post(self):
-        self.skipTest('raise NPE, see burpbuddy#22')
+        self.skipTest('raise NPE, burpbuddy#22')
         self.burp.scan.passive.post(RequestResponse(
-            host='localhost',
+            host=self.target,
             port=80,
             use_https=False,
-            request=b'',
-            response=b'',
+            request=b'GET / HTTP/1.1',
+            response=b'nothing here',
         ))

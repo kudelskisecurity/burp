@@ -11,14 +11,14 @@ class TestSiteMap(TestBase):
 
     def test_sitemap(self):
         ret_req, _ = self.burp.sitemap.post(Request(
-            host='localhost',
+            host=self.target,
             port=80,
             protocol='http',
-            raw=b'',
+            raw=b'GET / HTTP/1.1\n',
             comment='test comment',
             highlight='test highlight',
         ), Response(
-            raw=b'',
+            raw=b'nothing',
         ))
 
         set(self.burp.sitemap.get())

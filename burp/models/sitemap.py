@@ -59,6 +59,8 @@ class RequestReturned(NamedTuple('RequestReturned',
     def from_json(cls, json: MutableMapping[str, Any]) -> 'RequestReturned':
         with JsonParser(json):
             json.pop('messageType')
+            json.pop('query', None)  # TODO sometimes it's there
+            json.pop('comment', None)  # TODO sometimes it's there
             return RequestReturned(
                 http_version=parse_http_version(json.pop('httpVersion')),
                 headers=tuple((ensure(str, k), ensure(str, v)) for k, v in pop_all(json.pop('headers')).items()),

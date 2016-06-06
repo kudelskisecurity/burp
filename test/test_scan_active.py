@@ -17,7 +17,7 @@ class TestScanPassive(TestBase):
                               request_count=0,
                               status=ScanStatus.FINISHED,
                               percent_complete=100,
-                              issues=tuple(),
+                              issues=tuple(),  # TODO add test issue
                           ))
 
     def test_scan_active_get_delete_unknown_id(self):
@@ -30,17 +30,19 @@ class TestScanPassive(TestBase):
                               request_count=0,
                               status=ScanStatus.FINISHED,
                               percent_complete=100,
-                              issues=tuple(),
+                              issues=tuple(),  # TODO add test issue
                           ))
 
     def test_scan_active(self):
         old_active = set(self.burp.scan.active.get())
         self.burp.scan.active.post(Request(
-            host='perdu.com',
+            host=self.target,
             port=80,
             use_https=False,
             request=b'GET / HTTP/1.1\n'
-                    b'Host: perdu.com\n',
+                    b'Host: perdu.com\n'
+                    b'\n'
+                    b'lost?',
         ))
 
         new_active = set(self.burp.scan.active.get())
