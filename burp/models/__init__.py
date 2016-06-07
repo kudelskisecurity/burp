@@ -1,10 +1,10 @@
 from base64 import b64encode
 from datetime import datetime
 
-from typing import Any, NamedTuple, Tuple, AbstractSet, Mapping, MutableMapping
+from typing import Any, NamedTuple, Tuple, AbstractSet, Mapping, MutableMapping, Optional
 from typing import Union
 
-from burp.utils.json import JsonParser, pop_all, ensure_values
+from burp.utils.json import JsonParser, pop_all, ensure_values, ensure
 
 
 class Request(NamedTuple('Request', [
@@ -60,8 +60,8 @@ class RequestTiny(NamedTuple('Request', [
 
 
 class Cookie(NamedTuple('Cookie', [
-    ('domain', str),
-    ('expiration', datetime),
+    ('domain', Optional[str]),
+    ('expiration', Optional[datetime]),
     ('name', str),
     ('value', str),
 ])):
@@ -70,10 +70,11 @@ class Cookie(NamedTuple('Cookie', [
     @classmethod
     def from_json(cls, json: MutableMapping[str, Any]) -> 'Cookie':
         with JsonParser(json):
-            expiration_raw = json.pop('expiration')
-            expiration = datetime.strptime(expiration_raw, cls.__date_format)
+            expiration_raw = json.pop('expiration', None)
+            expiration = expiration_raw and datetime.strptime(expiration_raw, cls.__date_format)
             return Cookie(
                 expiration=expiration,
+                domain=ensure((str, type(None)), json.pop('domain', None)),
                 **pop_all(ensure_values(str, json))
             )
 

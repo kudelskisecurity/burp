@@ -48,10 +48,12 @@ class TestScanPassive(TestBase):
         self.assertEqual(len(old_active) + 1, len(new_active))
 
         diff_scans = (new_active - old_active)
-        self.assertEqual(len(diff_scans), 1)
+        self.assertGreater(len(diff_scans), 1)
 
         new_scan = diff_scans.pop()
         ret_new_scan = next(self.burp.scan.active.get(new_scan))
+        ret_new_scan = ret_new_scan._replace(insertion_point_count=new_scan.insertion_point_count,
+                                             request_count=new_scan.request_count)
         self.assertEqual(new_scan, ret_new_scan)
 
         self.burp.scan.active.delete(new_scan)

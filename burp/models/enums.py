@@ -10,6 +10,8 @@ class IssueSeverity(Enum):
 
 class IssueConfidence(Enum):
     CERTAIN = 'Certain'
+    FIRM = 'Firm'
+    TENTATIVE = 'Tentative'
 
 
 class IssueType(Enum):
@@ -143,12 +145,6 @@ class IssueType(Enum):
     XML_EXTERNAL_ENTITY_INJECTION = 1049600
     XML_INJECTION = 1050368
     XPATH_INJECTION = 1050112
-
-
-class ScanStatus(Enum):
-    FINISHED = 'finished'
-    CANCELLED = 'cancelled'
-    NOTHING_DONE = '0% complete'
 
 
 class Tool(Enum):

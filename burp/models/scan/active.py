@@ -2,9 +2,8 @@ from base64 import b64encode
 
 from typing import NamedTuple, Mapping, Any, Tuple, MutableMapping
 
-from burp.models.enums import ScanStatus
 from burp.models.errors import BurpError
-from burp.utils.json import JsonParser, pop_all, translate_keys, ensure_values
+from burp.utils.json import JsonParser, pop_all, translate_keys, ensure_values, ensure
 
 
 class Request(NamedTuple('Request', [
@@ -27,7 +26,7 @@ class Scan(NamedTuple('Scan', [
     ('errors', int),
     ('insertion_point_count', int),
     ('request_count', int),
-    ('status', ScanStatus),
+    ('status', str),
     ('percent_complete', int),
     ('issues', Tuple[Any, ...]),  # TODO specify type
 ])):
@@ -35,7 +34,7 @@ class Scan(NamedTuple('Scan', [
     def from_json(cls, json: MutableMapping[str, Any]) -> 'Scan':
         with JsonParser(json):
             return Scan(
-                status=ScanStatus(json.pop('status')),
+                status=ensure(str, json.pop('status')),
                 # TODO how to parse?
                 issues=tuple(json.pop('issues')) and tuple(),
                 **pop_all(translate_keys(ensure_values(int, json), {

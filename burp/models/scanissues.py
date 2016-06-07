@@ -1,45 +1,11 @@
-from base64 import b64decode, b64encode
-from itertools import chain
+from base64 import b64encode, b64decode
 
-from typing import MutableMapping, Any, Mapping, NamedTuple, Tuple, Iterator
-from typing import Union, Dict
+from typing import Any, Mapping, NamedTuple, Tuple, MutableMapping, Generator, Optional
+from typing import Union
 
-from burp.models import RequestSmall
+from burp.models import RequestSmall, Cookie
 from burp.models.enums import IssueSeverity, IssueConfidence, IssueType
-from burp.utils.json import ensure, JsonParser, pop_all, translate_keys
-from burp.utils.json import ensure_values, parse_http_version
-
-
-def _common_request_response_from_json(json: MutableMapping[str, Any]) \
-        -> Dict[str, Any]:
-    return dict(
-        host=json.pop('host'),
-        port=ensure(int, json.pop('port')),
-        protocol=json.pop('protocol'),
-    )
-
-
-class RequestReturned(NamedTuple('RequestReturned', [
-    ('host', str),
-    ('port', int),
-    ('protocol', str),
-    ('http_version', Tuple[int, int]),
-    ('in_scope', bool),
-    ('reference_id', int),
-    ('tool_flag', int),
-    ('raw', bytes),
-])):
-    @classmethod
-    def from_json(cls, json: MutableMapping[str, Any]) -> 'RequestReturned':
-        with JsonParser(json):
-            return RequestReturned(
-                http_version=parse_http_version(json.pop('httpVersion')),
-                in_scope=ensure(bool, json.pop('inScope')),
-                reference_id=ensure(int, json.pop('referenceID')),
-                tool_flag=ensure(int, json.pop('toolFlag')),
-                raw=b64decode(json.pop('raw')),
-                **_common_request_response_from_json(json)
-            )
+from burp.utils.json import JsonParser, ensure, parse_http_version, pop_all
 
 
 class Response(NamedTuple('Response', [
@@ -55,33 +21,6 @@ class Response(NamedTuple('Response', [
             protocol=self.protocol,
             raw=b64encode(self.raw).decode(),
         )
-
-
-class ResponseReturned(NamedTuple('ResponseReturned', [
-    ('host', str),
-    ('port', int),
-    ('protocol', str),
-    ('raw', bytes),
-    ('status_code', int),
-    ('in_scope', bool),
-    ('reference_id', int),
-    ('tool_flag', int),
-])):
-    @classmethod
-    def from_json(cls, json: MutableMapping[str, Any]) -> 'ResponseReturned':
-        with JsonParser(json):
-            return ResponseReturned(
-                in_scope=ensure(bool, json.pop('inScope')),
-                raw=b64decode(json.pop('raw').encode()),
-                **dict(chain(
-                    _common_request_response_from_json(json).items(),
-                    pop_all(translate_keys(ensure_values(int, json), {
-                        'statusCode': 'status_code',
-                        'referenceID': 'reference_id',
-                        'toolFlag': 'tool_flag',
-                    })).items()),
-                )
-            )
 
 
 class ScanIssue(NamedTuple('ScanIssue', [
@@ -134,48 +73,167 @@ class ScanIssue(NamedTuple('ScanIssue', [
         )
 
 
-class ScanIssueReturned(NamedTuple('ScanIssueReturned', [
-    ('url', str),
-    ('host', str),
-    ('port', int),
-    ('protocol', str),  # TODO maybe enum
-    ('name', str),
-    ('issue_type', IssueType),
-    ('severity', IssueSeverity),
-    ('confidence', IssueConfidence),
-    ('issue_background', str),
-    ('remediation_background', str),
-    ('issue_detail', str),
-    ('remediation_detail', str),
+class RequestReturnedGetNone(NamedTuple('RequestReturnedGetNone', [
     ('in_scope', bool),
-    ('requests_responses', Tuple[Tuple[RequestReturned,
-                                       ResponseReturned], ...]),
+    ('http_version', Tuple[int, int]),
+    ('body', bytes),
+    ('tool_flag', int),
+    ('url', str),
+    ('method', str),
+    ('protocol', str),
+    ('path', str),
+    ('headers', Tuple[Tuple[str, str]]),
+    ('port', int),
+    ('host', str),
+    ('raw', bytes),
+    ('reference_id', int),
+    ('query', Optional[str]),
 ])):
-    @staticmethod
-    def _get_requests_responses(json: MutableMapping[str, Any]) \
-            -> Iterator[Tuple[RequestReturned, ResponseReturned]]:
-        for item in json.pop('requestResponses'):
-            request, response = item.pop('request'), item.pop('response')
-            yield (
-                RequestReturned.from_json(request),
-                ResponseReturned.from_json(response),
-            )
+    @classmethod
+    def __pop_headers(cls, json: MutableMapping[str, Any]) -> Generator[Tuple[str, str], None, None]:
+        yield from ((ensure(str, k), ensure(str, v)) for k, v in pop_all(json.pop('headers')).items())
 
     @classmethod
-    def from_json(cls, json: MutableMapping[str, Any]) -> 'ScanIssueReturned':
+    def from_json(cls, json: MutableMapping[str, Any]) -> 'RequestReturnedGetNone':
         with JsonParser(json):
-            json.pop('messageType', None)  # TODO maybe more than one type?
-            return ScanIssueReturned(
+            assert json.pop('messageType', None) == 'request'
+            return RequestReturnedGetNone(
+                in_scope=ensure(bool, json.pop('inScope')),
+                http_version=parse_http_version(json.pop('httpVersion')),
+                body=b64decode(json.pop('body').encode()),
+                tool_flag=ensure(int, json.pop('toolFlag')),
+                url=ensure(str, json.pop('url')),
+                method=ensure(str, json.pop('method')),
+                protocol=ensure(str, json.pop('protocol')),
+                path=ensure(str, json.pop('path')),
+                headers=tuple(cls.__pop_headers(json)),
                 port=ensure(int, json.pop('port')),
-                issue_type=IssueType(json.pop('issueType')),
+                host=ensure(str, json.pop('host')),
+                raw=b64decode(json.pop('raw').encode()),
+                reference_id=ensure(int, json.pop('referenceID')),
+                query=ensure((str, type(None)), json.pop('query', None)),
+            )
+
+
+class ResponseReturnedGetNone(NamedTuple('ResponseReturnedGetNone', [
+    ('in_scope', bool),
+    # ('http_version', Tuple[int, int]),
+    ('body', bytes),
+    ('tool_flag', int),
+    # ('url', str),
+    # ('method', str),
+    ('protocol', str),
+    # ('path', str),
+    ('headers', Tuple[Tuple[str, str], ...]),
+    ('port', int),
+    ('host', str),
+    ('raw', bytes),
+    ('reference_id', int),
+
+    ('mime_type', str),
+    ('status_code', int),
+    ('cookies', Tuple[Cookie, ...]),
+])):
+    @classmethod
+    def __pop_headers(cls, json: MutableMapping[str, Any]) -> Generator[Tuple[str, str], None, None]:
+        yield from ((ensure(str, k), ensure(str, v)) for k, v in pop_all(json.pop('headers')).items())
+
+    @classmethod
+    def __pop_cookies(cls, json: MutableMapping[str, Any]) -> Generator[Cookie, None, None]:
+        # TODO how to parse?
+        yield from (Cookie.from_json(j) for j in json.pop('cookies'))
+
+    @classmethod
+    def from_json(cls, json: MutableMapping[str, Any]) -> 'ResponseReturnedGetNone':
+        with JsonParser(json):
+            assert json.pop('messageType', None) == 'response'
+            return ResponseReturnedGetNone(
+                in_scope=ensure(bool, json.pop('inScope')),
+                protocol=ensure(str, json.pop('protocol')),
+                port=ensure(int, json.pop('port')),
+                raw=b64decode(json.pop('raw').encode()),
+                body=b64decode(json.pop('body').encode()),
+                headers=tuple(cls.__pop_headers(json)),
+                cookies=tuple(cls.__pop_cookies(json)),
+                mime_type=ensure(str, json.pop('mimeType')),
+                host=ensure(str, json.pop('host')),
+                tool_flag=ensure(int, json.pop('toolFlag')),
+                status_code=ensure(int, json.pop('statusCode')),
+                reference_id=ensure(int, json.pop('referenceID')),
+            )
+
+
+class ScanIssueReturnedGetNone(NamedTuple('ScanIssueReturnedGetNone', [
+    ('in_scope', bool),
+    # ('http_version', Tuple[int, int]),
+    # ('body', bytes),
+    # ('tool_flag', int),
+    ('url', str),
+    # ('method', str),
+    ('protocol', str),
+    # ('path', str),
+    # ('headers', Tuple[Tuple[str, str]]),
+    ('port', int),
+    ('host', str),
+    # ('raw', bytes),
+    # ('reference_id', int),
+
+    ('requests_responses', Tuple[Tuple[RequestReturnedGetNone, ResponseReturnedGetNone], ...]),
+    ('confidence', IssueConfidence),
+    ('severity', IssueSeverity),
+    ('issue_type', IssueType),
+    ('remediation_background', Optional[str]),
+    ('remediation_detail', Optional[str]),
+    ('issue_background', str),
+    ('issue_detail', Optional[str]),
+    ('name', str),
+])):
+
+    @classmethod
+    def __get_response(cls, elem) -> Optional[ResponseReturnedGetNone]:
+        try:
+            return ResponseReturnedGetNone.from_json(elem.pop('response'))
+        except KeyError:
+            return None
+
+    @classmethod
+    def __pop_requests_responses(cls, json: MutableMapping[str, Any]) \
+            -> Generator[Tuple[RequestReturnedGetNone, Optional[ResponseReturnedGetNone]], None, None]:
+        yield from ((
+                        RequestReturnedGetNone.from_json(elem.pop('request')),
+                        cls.__get_response(elem),
+                    ) for elem in json.pop('requestResponses'))
+
+
+    @classmethod
+    def from_json(cls, json: MutableMapping[str, Any]) -> 'ScanIssueReturnedGetNone':
+        with JsonParser(json):
+            assert json.pop('messageType', None) == 'scanIssue'
+            return ScanIssueReturnedGetNone(
+                protocol=ensure(str, json.pop('protocol')),
+                host=ensure(str, json.pop('host')),
+                port=ensure(int, json.pop('port')),
                 severity=IssueSeverity(json.pop('severity')),
                 confidence=IssueConfidence(json.pop('confidence')),
+                url=ensure(str, json.pop('url')),
+                name=ensure(str, json.pop('name')),
+                requests_responses=tuple(cls.__pop_requests_responses(json)),
+                remediation_background=ensure((str, type(None)), json.pop('remediationBackground', None)),
+                remediation_detail=ensure((str, type(None)), json.pop('remediationDetail', None)),
+                issue_background=ensure(str, json.pop('issueBackground')),
+                issue_detail=ensure((str, type(None)), json.pop('issueDetail', None)),
                 in_scope=ensure(bool, json.pop('inScope')),
-                requests_responses=tuple(cls._get_requests_responses(json)),
-                **pop_all(translate_keys(ensure_values(str, json), {
-                    'issueBackground': 'issue_background',
-                    'remediationBackground': 'remediation_background',
-                    'issueDetail': 'issue_detail',
-                    'remediationDetail': 'remediation_detail',
-                }))
+                issue_type=IssueType(json.pop('issueType')),
             )
+
+
+class ScanIssueReturnedGetMulti(NamedTuple('ScanIssueReturnedGetMulti', [
+
+])):
+    pass
+
+
+class ScanIssueReturnedPost(NamedTuple('ScanIssueReturnedGet', [
+
+])):
+    pass
