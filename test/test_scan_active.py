@@ -1,4 +1,3 @@
-from burp.models.enums import ScanStatus
 from burp.models.scan.active import Request, Scan, ScanNotFoundError
 from test import TestBase
 
@@ -15,7 +14,7 @@ class TestScanPassive(TestBase):
                               errors=0,
                               insertion_point_count=0,
                               request_count=0,
-                              status=ScanStatus.FINISHED,
+                              status='finished',
                               percent_complete=100,
                               issues=tuple(),  # TODO add test issue
                           ))
@@ -28,7 +27,7 @@ class TestScanPassive(TestBase):
                               errors=0,
                               insertion_point_count=0,
                               request_count=0,
-                              status=ScanStatus.FINISHED,
+                              status='finished',
                               percent_complete=100,
                               issues=tuple(),  # TODO add test issue
                           ))

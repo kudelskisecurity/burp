@@ -1,0 +1,251 @@
+[{
+	"confidence" : "Certain",
+	"host" : "perdu.com",
+	"issueType" : 6292992,
+	"issueBackground" : "<p>The file robots.txt is used to give instructions to web robots, such as search engine crawlers, about locations within the web site that robots are allowed, or not allowed, to crawl and index.</p>\n<p>The presence of the robots.txt does not in itself present any kind of security vulnerability. However, it is often used to identify restricted or private areas of a site's contents. The information in the file may therefore help an attacker to map out the site's contents, especially if some of the locations identified are not linked from elsewhere in the site. If the application relies on robots.txt to protect access to these areas, and does not enforce proper access control over them, then this presents a serious vulnerability.</p>",
+	"protocol" : "http",
+	"messageType" : "scanIssue",
+	"name" : "Robots.txt file",
+	"issueDetail" : "The web server contains a robots.txt file.",
+	"severity" : "Information",
+	"url" : "http://perdu.com",
+	"port" : 80,
+	"remediationBackground" : "<p>The robots.txt file is not itself a security threat, and its correct use can represent good practice for non-security reasons. You should not assume that all web robots will honor the file's instructions. Rather, assume that attackers will pay close attention to any locations identified in the file. Do not rely on robots.txt to provide any kind of protection over unauthorized access.</p>",
+	"requestResponses" : [
+		{
+			"response" : {
+				"headers" : {
+					"Content-Length" : "26",
+					"Connection" : "close",
+					"Server" : "Apache/2.4.7 (Ubuntu)",
+					"Accept-Ranges" : "bytes",
+					"Date" : "Wed, 08 Jun 2016 10:27:42 GMT",
+					"Last-Modified" : "Mon, 05 Oct 2015 07:51:07 GMT",
+					"Content-Type" : "text/plain"
+				},
+				"raw" : "",
+				"toolFlag" : 16962,
+				"inScope" : true,
+				"mimeType" : "text",
+				"port" : 80,
+				"referenceID" : 0,
+				"statusCode" : 200,
+				"body" : "",
+				"cookies" : [],
+				"host" : "perdu.com",
+				"messageType" : "response",
+				"protocol" : "http"
+			},
+			"request" : {
+				"messageType" : "request",
+				"protocol" : "http",
+				"host" : "perdu.com",
+				"body" : "",
+				"httpVersion" : "HTTP/1.1",
+				"referenceID" : 0,
+				"port" : 80,
+				"method" : "GET",
+				"url" : "http://perdu.com",
+				"path" : "/robots.txt",
+				"inScope" : true,
+				"toolFlag" : 16962,
+				"headers" : {
+					"Accept" : "*/*",
+					"Connection" : "close",
+					"Accept-Language" : "en",
+					"Host" : "perdu.com",
+					"User-Agent" : "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)"
+				},
+				"raw" : ""
+			},
+			"messageType" : "requestResponse"
+		}
+	],
+	"inScope" : true
+},
+{
+	"name" : "Frameable response (potential Clickjacking)",
+	"severity" : "Information",
+	"protocol" : "http",
+	"messageType" : "scanIssue",
+	"issueBackground" : "<p>If a page fails to set an appropriate X-Frame-Options or Content-Security-Policy HTTP header, it might be possible for a page controlled by an attacker to load it within an iframe. This may enable a clickjacking attack, in which the attacker's page overlays the target application's interface with a different interface provided by the attacker. By inducing victim users to perform actions such as mouse clicks and keystrokes, the attacker can cause them to unwittingly carry out actions within the application that is being targeted. This technique allows the attacker to circumvent defenses against cross-site request forgery, and may result in unauthorized actions.</p>\n<p>Note that some applications attempt to prevent these attacks from within the HTML page itself, using \"framebusting\" code. However, this type of defense is normally ineffective and can usually be circumvented by a skilled attacker.</p>\n<p>You should determine whether any functions accessible within frameable pages can be used by application users to perform any sensitive actions within the application. </p>",
+	"host" : "perdu.com",
+	"issueType" : 5245344,
+	"confidence" : "Firm",
+	"inScope" : true,
+	"requestResponses" : [
+		{
+			"messageType" : "requestResponse",
+			"request" : {
+				"host" : "perdu.com",
+				"messageType" : "request",
+				"protocol" : "http",
+				"referenceID" : 0,
+				"httpVersion" : "HTTP/1.1",
+				"body" : "",
+				"path" : "/",
+				"url" : "http://perdu.com",
+				"method" : "GET",
+				"port" : 80,
+				"headers" : {
+					"Host" : "perdu.com",
+					"User-Agent" : "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)",
+					"Accept-Language" : "en",
+					"Connection" : "close",
+					"Accept" : "*/*"
+				},
+				"raw" : "",
+				"toolFlag" : 16962,
+				"inScope" : true
+			},
+			"response" : {
+				"protocol" : "http",
+				"messageType" : "response",
+				"host" : "perdu.com",
+				"statusCode" : 200,
+				"cookies" : [],
+				"body" : "",
+				"referenceID" : 0,
+				"port" : 80,
+				"mimeType" : "HTML",
+				"inScope" : true,
+				"raw" : "",
+				"headers" : {
+					"Server" : "Apache/2.2.8 (Ubuntu) DAV/2",
+					"Content-Type" : "text/html",
+					"Date" : "Wed, 08 Jun 2016 10:28:06 GMT",
+					"Content-Length" : "891",
+					"X-Powered-By" : "PHP/5.2.4-2ubuntu5.10",
+					"Connection" : "close"
+				},
+				"toolFlag" : 16962
+			}
+		}
+	],
+	"remediationBackground" : "<p>To effectively prevent framing attacks, the application should return a response header with the name <b>X-Frame-Options</b> and the value <b>DENY</b> to prevent framing altogether, or the value <b>SAMEORIGIN</b> to allow framing only by pages on the same origin as the response itself. Note that the SAMEORIGIN header can be partially bypassed if the application itself can be made to frame untrusted websites.</p>",
+	"port" : 80,
+	"url" : "http://perdu.com"
+},
+{
+	"name" : "HTML does not specify charset",
+	"severity" : "Information",
+	"confidence" : "Certain",
+	"host" : "perdu.com",
+	"issueType" : 8389120,
+	"issueBackground" : "<p>If a  response states that it contains HTML content but does not specify a character set, then the browser may analyze the HTML and attempt to determine which character set it appears to be using. Even if the majority of the HTML actually employs a standard character set such as UTF-8, the presence of non-standard characters anywhere in the response may cause the browser to interpret the content using a different character set. This can have unexpected results, and can lead to cross-site scripting vulnerabilities in which non-standard encodings like UTF-7 can be used to bypass the application's defensive filters.</p>\n<p>In most cases, the absence of a charset directive does not constitute a security flaw, particularly if the response contains static content. You should review the contents of affected responses, and the context in which they appear, to determine whether any vulnerability exists. </p>",
+	"protocol" : "http",
+	"messageType" : "scanIssue",
+	"remediationBackground" : "<p>For every response containing HTML content, the application should include within the Content-type header a directive specifying a standard recognized character set, for example <b>charset=ISO-8859-1</b>.\n</p>",
+	"requestResponses" : [
+		{
+			"messageType" : "requestResponse",
+			"request" : {
+				"inScope" : true,
+				"headers" : {
+					"Connection" : "close",
+					"Accept" : "*/*",
+					"User-Agent" : "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)",
+					"Host" : "perdu.com",
+					"Accept-Language" : "en"
+				},
+				"raw" : "",
+				"toolFlag" : 16962,
+				"method" : "GET",
+				"port" : 80,
+				"path" : "/",
+				"url" : "http://perdu.com",
+				"body" : "",
+				"httpVersion" : "HTTP/1.1",
+				"referenceID" : 0,
+				"protocol" : "http",
+				"messageType" : "request",
+				"host" : "perdu.com"
+			},
+			"response" : {
+				"toolFlag" : 16962,
+				"headers" : {
+					"Content-Type" : "text/html",
+					"Server" : "Apache/2.2.8 (Ubuntu) DAV/2",
+					"Date" : "Wed, 08 Jun 2016 10:28:06 GMT",
+					"X-Powered-By" : "PHP/5.2.4-2ubuntu5.10",
+					"Content-Length" : "891",
+					"Connection" : "close"
+				},
+				"raw" : "",
+				"inScope" : true,
+				"mimeType" : "HTML",
+				"port" : 80,
+				"referenceID" : 0,
+				"statusCode" : 200,
+				"body" : "",
+				"cookies" : [],
+				"host" : "perdu.com",
+				"protocol" : "http",
+				"messageType" : "response"
+			}
+		}
+	],
+	"inScope" : true,
+	"url" : "http://perdu.com",
+	"port" : 80
+},
+{
+	"messageType" : "scanIssue",
+	"protocol" : "http",
+	"issueBackground" : "<p>The HTTP TRACE  method is designed for diagnostic purposes. If enabled, the web server will respond to requests that use the TRACE method by echoing in its response the exact request that was received.</p>\n<p>This behavior is often harmless, but occasionally leads to the disclosure of sensitive information such as internal authentication headers appended by reverse proxies. This functionality could historically be used to bypass the HttpOnly cookie flag on cookies, but this is no longer possible in modern web browsers. </p>",
+	"issueType" : 5245440,
+	"host" : "perdu.com",
+	"confidence" : "Certain",
+	"severity" : "Information",
+	"name" : "HTTP TRACE method is enabled",
+	"port" : 80,
+	"url" : "http://perdu.com",
+	"inScope" : true,
+	"requestResponses" : [
+		{
+			"response" : {
+				"mimeType" : "",
+				"port" : 80,
+				"toolFlag" : 16962,
+				"raw" : "",
+				"headers" : {
+					"Content-Length" : "79",
+					"Connection" : "close",
+					"Content-Type" : "message/http",
+					"Server" : "Apache/2.2.8 (Ubuntu) DAV/2",
+					"Date" : "Wed, 08 Jun 2016 10:28:06 GMT"
+				},
+				"inScope" : true,
+				"host" : "perdu.com",
+				"protocol" : "http",
+				"messageType" : "response",
+				"referenceID" : 0,
+				"cookies" : [],
+				"statusCode" : 200,
+				"body" : ""
+			},
+			"messageType" : "requestResponse",
+			"request" : {
+				"body" : "",
+				"httpVersion" : "HTTP/1.1",
+				"referenceID" : 0,
+				"messageType" : "request",
+				"protocol" : "http",
+				"host" : "perdu.com",
+				"inScope" : true,
+				"toolFlag" : 16962,
+				"headers" : {
+					"Host" : "perdu.com",
+					"Connection" : "close",
+					"Cookie" : ""
+				},
+				"raw" : "",
+				"port" : 80,
+				"method" : "TRACE",
+				"path" : "/",
+				"url" : "http://perdu.com"
+			}
+		}
+	],
+	"remediationBackground" : "<p>The TRACE method should be disabled on production web servers.</p>"
+}]
