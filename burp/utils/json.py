@@ -2,7 +2,7 @@ import collections
 from copy import copy
 from types import TracebackType
 
-from typing import List, TypeVar, Dict
+from typing import List, TypeVar, Dict, Union
 from typing import Optional, MutableMapping, Any, Generator, Tuple, Mapping
 
 from burp.models.errors import InvalidHttpVersion
@@ -50,7 +50,7 @@ class JsonParser:
         return False
 
 
-def ensure(needed_type: type, value: _T) -> _T:
+def ensure(needed_type: Union[type, Tuple[type, ...]], value: _T) -> _T:
     if isinstance(value, needed_type):
         return value
     raise TypeError('was not already of type {}'.format(needed_type), value)
