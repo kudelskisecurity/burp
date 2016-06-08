@@ -14,6 +14,23 @@ from burp.modules.spider import Spider
 from burp.modules.state import State
 
 
+class Intercept:
+    def __init__(self, connector: Connector) -> None:
+        self.enable = ProxyInterceptEnable(connector)
+        self.disable = ProxyInterceptDisable(connector)
+
+
+class Proxy:
+    def __init__(self, connector: Connector) -> None:
+        self.intercept = Intercept(connector)
+
+
+class Scan:
+    def __init__(self, connector: Connector) -> None:
+        self.active = ScanActive(connector)
+        self.passive = ScanPassive(connector)
+
+
 class Burp:
     def __init__(self, host: str, port: int) -> None:
         connector = Connector(host, port)
@@ -22,27 +39,10 @@ class Burp:
         self.scanissues = ScanIssues(connector)
         self.spider = Spider(connector)
         self.jar = Jar(connector)
-
-        class Scan:
-            def __init__(self) -> None:
-                self.active = ScanActive(connector)
-                self.passive = ScanPassive(connector)
-
-        self.scan = Scan()
-
+        self.scan = Scan(connector)
         self.send = Send(connector)
         self.alert = Alert(connector)
         self.sitemap = SiteMap(connector)
         self.proxyhistory = ProxyHistory(connector)
         self.state = State(connector)
-
-        class Proxy:
-            class Intercept:
-                def __init__(self) -> None:
-                    self.enable = ProxyInterceptEnable(connector)
-                    self.disable = ProxyInterceptDisable(connector)
-
-            def __init__(self) -> None:
-                self.intercept = Proxy.Intercept()
-
-        self.proxy = Proxy()
+        self.proxy = Proxy(connector)
