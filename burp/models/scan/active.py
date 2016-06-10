@@ -3,7 +3,8 @@ from base64 import b64encode
 from typing import NamedTuple, Mapping, Any, Tuple, MutableMapping
 
 from burp.models.errors import BurpError
-from burp.utils.json import JsonParser, pop_all, translate_keys, ensure_values, ensure
+from burp.utils.json import JsonParser, pop_all, translate_keys, ensure_values
+from burp.utils.json import ensure
 
 
 class Request(NamedTuple('Request', [

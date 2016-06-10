@@ -1,8 +1,8 @@
 from base64 import b64encode
 from datetime import datetime
 
-from typing import Any, NamedTuple, Tuple, AbstractSet, Mapping, MutableMapping, Optional
-from typing import Union
+from typing import Any, NamedTuple, Tuple, AbstractSet, Mapping
+from typing import Union, MutableMapping, Optional
 
 from burp.utils.json import JsonParser, pop_all, ensure_values, ensure
 
@@ -71,7 +71,10 @@ class Cookie(NamedTuple('Cookie', [
     def from_json(cls, json: MutableMapping[str, Any]) -> 'Cookie':
         with JsonParser(json):
             expiration_raw = json.pop('expiration', None)
-            expiration = expiration_raw and datetime.strptime(expiration_raw, cls.__date_format)
+            expiration = None
+            if expiration_raw is not None:
+                expiration = datetime.strptime(expiration_raw,
+                                               cls.__date_format)
             return Cookie(
                 expiration=expiration,
                 domain=ensure((str, type(None)), json.pop('domain', None)),

@@ -1,7 +1,7 @@
 from base64 import b64encode, b64decode
 
-from typing import Any, Mapping, NamedTuple, Tuple, MutableMapping, Generator, Optional
-from typing import Union
+from typing import Any, Mapping, NamedTuple, Tuple, MutableMapping
+from typing import Union, Generator, Optional
 
 from burp.models import RequestSmall, Cookie
 from burp.models.enums import IssueSeverity, IssueConfidence, IssueType
@@ -82,7 +82,7 @@ class RequestReturnedGetNone(NamedTuple('RequestReturnedGetNone', [
     ('method', str),
     ('protocol', str),
     ('path', str),
-    ('headers', Tuple[Tuple[str, str]]),
+    ('headers', Tuple[Tuple[str, str], ...]),
     ('port', int),
     ('host', str),
     ('raw', bytes),
@@ -90,11 +90,14 @@ class RequestReturnedGetNone(NamedTuple('RequestReturnedGetNone', [
     ('query', Optional[str]),
 ])):
     @classmethod
-    def __pop_headers(cls, json: MutableMapping[str, Any]) -> Generator[Tuple[str, str], None, None]:
-        yield from ((ensure(str, k), ensure(str, v)) for k, v in pop_all(json.pop('headers')).items())
+    def __pop_headers(cls, json: MutableMapping[str, Any]) \
+            -> Generator[Tuple[str, str], None, None]:
+        yield from ((ensure(str, k), ensure(str, v))
+                    for k, v in pop_all(json.pop('headers')).items())
 
     @classmethod
-    def from_json(cls, json: MutableMapping[str, Any]) -> 'RequestReturnedGetNone':
+    def from_json(cls, json: MutableMapping[str, Any]) \
+            -> 'RequestReturnedGetNone':
         with JsonParser(json):
             assert json.pop('messageType', None) == 'request'
             return RequestReturnedGetNone(
@@ -117,13 +120,9 @@ class RequestReturnedGetNone(NamedTuple('RequestReturnedGetNone', [
 
 class ResponseReturnedGetNone(NamedTuple('ResponseReturnedGetNone', [
     ('in_scope', bool),
-    # ('http_version', Tuple[int, int]),
     ('body', bytes),
     ('tool_flag', int),
-    # ('url', str),
-    # ('method', str),
     ('protocol', str),
-    # ('path', str),
     ('headers', Tuple[Tuple[str, str], ...]),
     ('port', int),
     ('host', str),
@@ -135,16 +134,19 @@ class ResponseReturnedGetNone(NamedTuple('ResponseReturnedGetNone', [
     ('cookies', Tuple[Cookie, ...]),
 ])):
     @classmethod
-    def __pop_headers(cls, json: MutableMapping[str, Any]) -> Generator[Tuple[str, str], None, None]:
-        yield from ((ensure(str, k), ensure(str, v)) for k, v in pop_all(json.pop('headers')).items())
+    def __pop_headers(cls, json: MutableMapping[str, Any]) \
+            -> Generator[Tuple[str, str], None, None]:
+        yield from ((ensure(str, k), ensure(str, v))
+                    for k, v in pop_all(json.pop('headers')).items())
 
     @classmethod
-    def __pop_cookies(cls, json: MutableMapping[str, Any]) -> Generator[Cookie, None, None]:
-        # TODO how to parse?
+    def __pop_cookies(cls, json: MutableMapping[str, Any]) \
+            -> Generator[Cookie, None, None]:
         yield from (Cookie.from_json(j) for j in json.pop('cookies'))
 
     @classmethod
-    def from_json(cls, json: MutableMapping[str, Any]) -> 'ResponseReturnedGetNone':
+    def from_json(cls, json: MutableMapping[str, Any]) \
+            -> 'ResponseReturnedGetNone':
         with JsonParser(json):
             assert json.pop('messageType', None) == 'response'
             return ResponseReturnedGetNone(
@@ -165,20 +167,12 @@ class ResponseReturnedGetNone(NamedTuple('ResponseReturnedGetNone', [
 
 class ScanIssueReturnedGetNone(NamedTuple('ScanIssueReturnedGetNone', [
     ('in_scope', bool),
-    # ('http_version', Tuple[int, int]),
-    # ('body', bytes),
-    # ('tool_flag', int),
     ('url', str),
-    # ('method', str),
     ('protocol', str),
-    # ('path', str),
-    # ('headers', Tuple[Tuple[str, str]]),
     ('port', int),
     ('host', str),
-    # ('raw', bytes),
-    # ('reference_id', int),
-
-    ('requests_responses', Tuple[Tuple[RequestReturnedGetNone, ResponseReturnedGetNone], ...]),
+    ('requests_responses', Tuple[Tuple[RequestReturnedGetNone,
+                                       ResponseReturnedGetNone], ...]),
     ('confidence', IssueConfidence),
     ('severity', IssueSeverity),
     ('issue_type', IssueType),
@@ -188,27 +182,37 @@ class ScanIssueReturnedGetNone(NamedTuple('ScanIssueReturnedGetNone', [
     ('issue_detail', Optional[str]),
     ('name', str),
 ])):
-
     @classmethod
-    def __get_response(cls, elem) -> Optional[ResponseReturnedGetNone]:
+    def __get_response(cls, json: MutableMapping[str, Any]) \
+            -> Optional[ResponseReturnedGetNone]:
         try:
-            return ResponseReturnedGetNone.from_json(elem.pop('response'))
+            return ResponseReturnedGetNone.from_json(json.pop('response'))
         except KeyError:
             return None
 
     @classmethod
     def __pop_requests_responses(cls, json: MutableMapping[str, Any]) \
-            -> Generator[Tuple[RequestReturnedGetNone, Optional[ResponseReturnedGetNone]], None, None]:
-        yield from ((
-                        RequestReturnedGetNone.from_json(elem.pop('request')),
-                        cls.__get_response(elem),
-                    ) for elem in json.pop('requestResponses'))
-
+            -> Generator[Tuple[RequestReturnedGetNone,
+                               Optional[ResponseReturnedGetNone]],
+                         None, None]:
+        yield from (
+            (
+                RequestReturnedGetNone.from_json(elem.pop('request')),
+                cls.__get_response(elem),
+            ) for elem in json.pop('requestResponses'))
 
     @classmethod
-    def from_json(cls, json: MutableMapping[str, Any]) -> 'ScanIssueReturnedGetNone':
+    def from_json(cls, json: MutableMapping[str, Any]) \
+            -> 'ScanIssueReturnedGetNone':
         with JsonParser(json):
             assert json.pop('messageType', None) == 'scanIssue'
+            req_res = tuple(cls.__pop_requests_responses(json))
+            remed_back = ensure((str, type(None)),
+                                json.pop('remediationBackground', None))
+            remed_detail = ensure((str, type(None)),
+                                  json.pop('remediationDetail', None))
+            issue_detail = ensure((str, type(None)),
+                                  json.pop('issueDetail', None))
             return ScanIssueReturnedGetNone(
                 protocol=ensure(str, json.pop('protocol')),
                 host=ensure(str, json.pop('host')),
@@ -217,11 +221,11 @@ class ScanIssueReturnedGetNone(NamedTuple('ScanIssueReturnedGetNone', [
                 confidence=IssueConfidence(json.pop('confidence')),
                 url=ensure(str, json.pop('url')),
                 name=ensure(str, json.pop('name')),
-                requests_responses=tuple(cls.__pop_requests_responses(json)),
-                remediation_background=ensure((str, type(None)), json.pop('remediationBackground', None)),
-                remediation_detail=ensure((str, type(None)), json.pop('remediationDetail', None)),
+                requests_responses=req_res,
+                remediation_background=remed_back,
+                remediation_detail=remed_detail,
                 issue_background=ensure(str, json.pop('issueBackground')),
-                issue_detail=ensure((str, type(None)), json.pop('issueDetail', None)),
+                issue_detail=issue_detail,
                 in_scope=ensure(bool, json.pop('inScope')),
                 issue_type=IssueType(json.pop('issueType')),
             )
@@ -230,10 +234,18 @@ class ScanIssueReturnedGetNone(NamedTuple('ScanIssueReturnedGetNone', [
 class ScanIssueReturnedGetMulti(NamedTuple('ScanIssueReturnedGetMulti', [
 
 ])):
-    pass
+    @classmethod
+    def from_json(cls, json: MutableMapping[str, Any]) \
+            -> 'ScanIssueReturnedGetMulti':
+        with JsonParser(json):
+            return ScanIssueReturnedGetMulti()
 
 
-class ScanIssueReturnedPost(NamedTuple('ScanIssueReturnedGet', [
+class ScanIssueReturnedPost(NamedTuple('ScanIssueReturnedPost', [
 
 ])):
-    pass
+    @classmethod
+    def from_json(cls, json: MutableMapping[str, Any]) \
+            -> 'ScanIssueReturnedPost':
+        with JsonParser(json):
+            return ScanIssueReturnedPost()
